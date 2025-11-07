@@ -72,7 +72,13 @@ pipeline {
                     // Optional: Push to Docker Hub
                     withDockerRegistry([credentialsId: 'dockerhub-credentials', url: '']) {
                         sh """
+                            # Tag with registry prefix for version
                             docker tag ${DOCKER_IMAGE}:${VERSION} ${REGISTRY}/${DOCKER_IMAGE}:${VERSION}
+                            
+                            # Tag with registry prefix for latest
+                            docker tag ${DOCKER_IMAGE}:${VERSION} ${REGISTRY}/${DOCKER_IMAGE}:latest
+                            
+                            # Push both tags
                             docker push ${REGISTRY}/${DOCKER_IMAGE}:${VERSION}
                             docker push ${REGISTRY}/${DOCKER_IMAGE}:latest
                         """
