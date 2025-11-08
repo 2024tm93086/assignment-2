@@ -85,10 +85,11 @@ pipeline {
                 sh '''
                 # Start Minikube if not running (docker driver works well on CI agents with Docker)
                 if ! minikube status >/dev/null 2>&1; then
-                    minikube start --driver=docker
+                    minikube start --driver=docker --memory=2048mb
                 fi
 
                 # Point kubectl to minikube context (safe if already set)
+                kubectl config use-context minikube
                 kubectl get nodes
                 '''
             }
