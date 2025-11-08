@@ -89,6 +89,7 @@ pipeline {
                 fi
 
                 # Point kubectl to minikube context (safe if already set)
+                alias kubectl="minikube kubectl --"
                 kubectl config use-context minikube
                 kubectl get nodes
                 '''
