@@ -79,22 +79,55 @@ pipeline {
                 }
             }
         }
-        
-        stage('Deploy') {
+
+        stage('Prepare Minikube') {
             steps {
-                sh """
-                    # Stop and remove old container if exists
-                    docker stop flask-app-container || true
-                    docker rm flask-app-container || true
-                    
-                    # Run new container
-                    docker run -d \
-                        --name flask-app-container \
-                        -p 5000:5000 \
-                        ${DOCKER_IMAGE}:${VERSION}
-                """
+                sh '''
+                # Start Minikube if not running (docker driver works well on CI agents with Docker)
+                if ! minikube status >/dev/null 2>&1; then
+                    minikube start --driver=docker
+                fi
+
+                # Point kubectl to minikube context (safe if already set)
+                kubectl get nodes
+                '''
             }
         }
+
+        stage('Deploy to Minikube') {
+            steps {
+                sh '''
+                # Render K8s manifests with the new image tag (simple inline replacement)
+                sed "s|IMAGE_PLACEHOLDER|${DOCKER_IMAGE}:${VERSION}|g" k8s/deployment.yaml > k8s/deployment.rendered.yaml
+
+                kubectl apply -f k8s/deployment.rendered.yaml
+                kubectl apply -f k8s/service.yaml
+
+                echo "Waiting for rollout…"
+                kubectl rollout status deploy/${APP_NAME} --timeout=120s
+
+                echo "Current objects:"
+                kubectl get deploy,po,svc -l app=${APP_NAME} -o wide
+                '''
+            }
+        }
+
+        
+        // stage('Deploy') {
+        //     steps {
+        //         sh """
+        //             # Stop and remove old container if exists
+        //             docker stop flask-app-container || true
+        //             docker rm flask-app-container || true
+                    
+        //             # Run new container
+        //             docker run -d \
+        //                 --name flask-app-container \
+        //                 -p 5000:5000 \
+        //                 ${DOCKER_IMAGE}:${VERSION}
+        //         """
+        //     }
+        // }
     }
     
     post {
@@ -106,6 +139,7 @@ pipeline {
         }
         always {
             // Clean up workspace
+            sh 'kubectl get all -A | head -n 50 || true'
             cleanWs()
         }
     }
