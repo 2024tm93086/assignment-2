@@ -32,30 +32,31 @@ pipeline {
         //     }
         // }
         
-        // stage('SonarQube Analysis') {
-        //     steps {
-        //         script {
-        //             def scannerHome = tool 'SonarScanner'
-        //             withSonarQubeEnv('sonarqube') {
-        //                 sh """
-        //                     ${scannerHome}/bin/sonar-scanner \
-        //                     -Dsonar.projectKey=flask-app \
-        //                     -Dsonar.sources=. \
-        //                     -Dsonar.host.url=http://localhost:9000 \
-        //                     -Dsonar.python.version=3.11
-        //                 """
-        //             }
-        //         }
-        //     }
-        // }
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    def scannerHome = tool 'SonarScanner'
+                    withSonarQubeEnv('sonarqube') {
+                        sh """
+                            . .venv/bin/activate
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=flask-app \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=http://localhost:9000 \
+                            -Dsonar.python.version=3.11
+                        """
+                    }
+                }
+            }
+        }
         
-        // stage('Quality Gate') {
-        //     steps {
-        //         timeout(time: 1, unit: 'MINUTES') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
         
         stage('Build Docker Image') {
             steps {
