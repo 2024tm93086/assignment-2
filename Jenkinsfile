@@ -80,24 +80,25 @@ pipeline {
             }
         }
 
-        stage('Prepare Minikube') {
-            steps {
-                sh '''
-                # Start Minikube if not running (docker driver works well on CI agents with Docker)
-                if ! minikube status >/dev/null 2>&1; then
-                    minikube start --driver=docker --memory=2048mb
-                fi
+        // stage('Prepare Minikube') {
+        //     steps {
+        //         sh '''
+        //         # Start Minikube if not running (docker driver works well on CI agents with Docker)
+        //         if ! minikube status >/dev/null 2>&1; then
+        //             minikube start --driver=docker --memory=2048mb
+        //         fi
 
-                # Point kubectl to minikube context (safe if already set)
-                kubectl config use-context minikube
-                kubectl get nodes
-                '''
-            }
-        }
+        //         # Point kubectl to minikube context (safe if already set)
+        //         kubectl config use-context minikube
+        //         kubectl get nodes
+        //         '''
+        //     }
+        // }
 
         stage('Deploy to Minikube') {
             steps {
                 sh '''
+                minikube start --driver=docker --memory=2048mb
                 # Render K8s manifests with the new image tag (simple inline replacement)
                 sed "s|IMAGE_PLACEHOLDER|${DOCKER_IMAGE}:${VERSION}|g" k8s/deployment.yaml > k8s/deployment.rendered.yaml
 
