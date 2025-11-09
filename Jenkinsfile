@@ -98,7 +98,6 @@ pipeline {
         stage('Deploy to Minikube') {
             steps {
                 sh '''
-                minikube start --driver=docker --memory=2048mb
                 # Render K8s manifests with the new image tag (simple inline replacement)
                 sed "s|IMAGE_PLACEHOLDER|${DOCKER_IMAGE}:${VERSION}|g" k8s/deployment.yaml > k8s/deployment.rendered.yaml
 
