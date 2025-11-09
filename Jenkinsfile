@@ -89,8 +89,8 @@ pipeline {
                 fi
 
                 # Point kubectl to minikube context (safe if already set)
-                minikube kubectl -- config use-context minikube
-                minikube kubectl -- get nodes
+                kubectl config use-context minikube
+                kubectl get nodes
                 '''
             }
         }
@@ -101,14 +101,14 @@ pipeline {
                 # Render K8s manifests with the new image tag (simple inline replacement)
                 sed "s|IMAGE_PLACEHOLDER|${DOCKER_IMAGE}:${VERSION}|g" k8s/deployment.yaml > k8s/deployment.rendered.yaml
 
-                minikube kubectl -- apply -f k8s/deployment.rendered.yaml
-                minikube kubectl -- apply -f k8s/service.yaml
+                kubectl apply -f k8s/deployment.rendered.yaml
+                kubectl apply -f k8s/service.yaml
 
                 echo "Waiting for rollout…"
-                minikube kubectl -- rollout status deploy/${APP_NAME} --timeout=120s
+                kubectl rollout status deploy/${APP_NAME} --timeout=120s
 
                 echo "Current objects:"
-                minikube kubectl -- get deploy,po,svc -l app=${APP_NAME} -o wide
+                kubectl get deploy,po,svc -l app=${APP_NAME} -o wide
                 '''
             }
         }
@@ -140,7 +140,7 @@ pipeline {
         }
         always {
             // Clean up workspace
-            sh 'minikube kubectl -- get all -A | head -n 50 || true'
+            sh 'kubectl get all -A | head -n 50 || true'
             cleanWs()
         }
     }
