@@ -110,18 +110,6 @@ pipeline {
             }
         }
 
-        stage('Deploy to EKS') {
-            steps {
-                sh """
-                   # Update image in deployment
-                    kubectl set image deployment/flask-app flask-app=${DOCKER_IMAGE}:${IMAGE_TAG} --record
-                    
-                    # Wait for rollout to complete
-                    kubectl rollout status deployment/flask-app
-                """
-            }
-        }
-
         
         // stage('Deploy') {
         //     steps {
