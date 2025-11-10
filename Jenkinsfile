@@ -5,6 +5,8 @@ pipeline {
         DOCKER_IMAGE = "flask-app"
         VERSION = "${BUILD_NUMBER}"
         REGISTRY = "2024tm93086"
+        AWS_REGION = 'ap-south-1'
+        EKS_CLUSTER_NAME = 'bits-assignment-2'
     }
     
     stages {
@@ -80,36 +82,43 @@ pipeline {
             }
         }
 
-        // stage('Prepare Minikube') {
-        //     steps {
-        //         sh '''
-        //         # Start Minikube if not running (docker driver works well on CI agents with Docker)
-        //         if ! minikube status >/dev/null 2>&1; then
-        //             minikube start --driver=docker --memory=2048mb
-        //         fi
-
-        //         # Point kubectl to minikube context (safe if already set)
-        //         kubectl config use-context minikube
-        //         kubectl get nodes
-        //         '''
-        //     }
-        // }
-
-        stage('Deploy to Minikube') {
+        stage('Configure kubectl for EKS') {
             steps {
-                sh '''
-                # Render K8s manifests with the new image tag (simple inline replacement)
-                sed "s|IMAGE_PLACEHOLDER|${DOCKER_IMAGE}:${VERSION}|g" k8s/deployment.yaml > k8s/deployment.rendered.yaml
+                sh """
+                    echo "Configuring kubectl for EKS cluster: ${EKS_CLUSTER_NAME}"
+                    
+                    # Update kubeconfig
+                    aws eks update-kubeconfig \
+                        --region ${AWS_REGION} \
+                        --name ${EKS_CLUSTER_NAME}
+                    
+                    # Verify connection
+                    kubectl cluster-info
+                    kubectl get nodes
+                """
+            }
+        }
 
-                kubectl apply -f k8s/deployment.rendered.yaml
-                kubectl apply -f k8s/service.yaml
+        stage('Update Kubernetes Manifests') {
+            steps {
+                sh """
+                    kubectl apply -f k8s/deployment.yaml
+                    kubectl apply -f k8s/service.yaml
+                    kubectl get pods
+                    kubectl get svc
+                """
+            }
+        }
 
-                echo "Waiting for rollout…"
-                kubectl rollout status deploy/${APP_NAME} --timeout=120s
-
-                echo "Current objects:"
-                kubectl get deploy,po,svc -l app=${APP_NAME} -o wide
-                '''
+        stage('Deploy to EKS') {
+            steps {
+                sh """
+                   # Update image in deployment
+                    kubectl set image deployment/flask-app flask-app=${DOCKER_IMAGE}:${IMAGE_TAG} --record
+                    
+                    # Wait for rollout to complete
+                    kubectl rollout status deployment/flask-app
+                """
             }
         }
 
