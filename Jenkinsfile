@@ -109,23 +109,6 @@ pipeline {
                 """
             }
         }
-
-        
-        // stage('Deploy') {
-        //     steps {
-        //         sh """
-        //             # Stop and remove old container if exists
-        //             docker stop flask-app-container || true
-        //             docker rm flask-app-container || true
-                    
-        //             # Run new container
-        //             docker run -d \
-        //                 --name flask-app-container \
-        //                 -p 5000:5000 \
-        //                 ${DOCKER_IMAGE}:${VERSION}
-        //         """
-        //     }
-        // }
     }
     
     post {
