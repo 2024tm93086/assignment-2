@@ -104,6 +104,7 @@ pipeline {
                 sh """
                     kubectl apply -f k8s/deployment.yaml
                     kubectl apply -f k8s/service.yaml
+                    kubectl set image deployment/${DOCKER_IMAGE} ${DOCKER_IMAGE}=${REGISTRY}/${DOCKER_IMAGE}:latest
                     kubectl get pods
                     kubectl get svc
                 """
