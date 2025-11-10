@@ -1,7 +1,7 @@
 def test_home_page(client):
     resp = client.get("/")
     assert resp.status_code == 200
-    assert b"Add a Workoust" in resp.data
+    assert b"Add a Workout" in resp.data
 
 
 def test_add_workout_success(client):
@@ -12,6 +12,7 @@ def test_add_workout_success(client):
     }, follow_redirects=True)
 
     # Redirects to /workouts
+    print(resp.data)
     assert resp.status_code == 200
     assert b"Workout added!"
 
