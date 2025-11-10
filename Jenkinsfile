@@ -27,12 +27,14 @@ pipeline {
                 '''
             }
         }
-        
-        // stage('Run Tests') {
-        //     steps {
-        //         sh 'pytest tests/ -v'
-        //     }
-        // }
+
+        stage('Run Pytest') {
+            steps {
+                sh '''
+                    pytest
+                '''
+            }
+        }
         
         stage('SonarQube Analysis') {
             steps {
